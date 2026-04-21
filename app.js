@@ -29,9 +29,11 @@ function sendMessage() {
 
 async function llamarAPI(textoUsuario, esInicio) {
 
-  if (!esInicio) {
+  if (esInicio) {
+    historial.push({ role: 'user', content: 'Hola, empieza la sesión' });
+} else {
     historial.push({ role: 'user', content: textoUsuario });
-  }
+}
 
   const typing = mostrarTyping();
 
