@@ -8,40 +8,40 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Metodo no permitido' });
   }
 
-  let messages;
-  try {
-    messages = req.body.messages;
-  } catch (e) {
-    return res.status(400).json({ error: 'Body invalido' });
-  }
+  const messages = req.body.messages;
 
   if (!messages) {
-    return res.status(400).json({ error: 'Falta el campo messages' });
+    return res.status(400).json({ error: 'Falta messages' });
   }
 
+  const contents = messages.map(m => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }]
+  }));
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
   try {
-    const respuesta = await fetch('https://api.anthropic.com/v1/messages', {
+    const respuesta = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type':      'application/json',
-        'x-api-key':         process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model:      'claude-3-haiku-20240307',
-        max_tokens: 2048,
-        system:     SYSTEM_PROMPT,
-        messages:   messages
+        system_instruction: {
+          parts: [{ text: SYSTEM_PROMPT }]
+        },
+        contents: contents
       })
     });
 
     const data = await respuesta.json();
-console.log('Respuesta Anthropic:', JSON.stringify(data));
-    if (!data.content || !data.content[0]) {
-      return res.status(500).json({ error: 'Sin respuesta de Anthropic', detalle: data });
+
+    if (!data.candidates || !data.candidates[0]) {
+      return res.status(500).json({ error: 'Sin respuesta', detalle: data });
     }
 
-    res.status(200).json({ reply: data.content[0].text });
+    const texto = data.candidates[0].content.parts[0].text;
+    res.status(200).json({ reply: texto });
 
   } catch (err) {
     res.status(500).json({ error: 'Error interno', detalle: err.message });
