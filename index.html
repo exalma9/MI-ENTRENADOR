@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitCoach IA</title>
+
+  <!-- Nuestro archivo de estilos -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Librería que convierte Markdown en tablas HTML bonitas -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+
+<body>
+
+  <div class="app">
+
+    <!-- La cabecera -->
+    <header>
+      <h1>FitCoach <span>IA</span></h1>
+      <p>Tu entrenador personal inteligente</p>
+    </header>
+
+    <!-- Aquí aparecerán los mensajes del chat -->
+    <div id="chat" class="chat"></div>
+
+    <!-- La barra donde el usuario escribe -->
+    <div class="input-bar">
+      <textarea
+        id="user-input"
+        placeholder="Escribe tu respuesta o feedback..."
+        rows="1"
+      ></textarea>
+      <button id="send-btn" onclick="sendMessage()">
+        Enviar
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Nuestro archivo JavaScript -->
+  <script src="app.js"></script>
+
+</body>
+</html>
