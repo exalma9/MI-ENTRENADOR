@@ -36,7 +36,7 @@ export default async function handler(req, res) {
     });
 
     const data = await respuesta.json();
-
+console.log('Respuesta Anthropic:', JSON.stringify(data));
     if (!data.content || !data.content[0]) {
       return res.status(500).json({ error: 'Sin respuesta de Anthropic', detalle: data });
     }
