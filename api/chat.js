@@ -1,10 +1,23 @@
+export const config = {
+  api: { bodyParser: true }
+};
+
 export default async function handler(req, res) {
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Metodo no permitido' });
   }
 
-  const { messages } = req.body;
+  let messages;
+  try {
+    messages = req.body.messages;
+  } catch (e) {
+    return res.status(400).json({ error: 'Body invalido' });
+  }
+
+  if (!messages) {
+    return res.status(400).json({ error: 'Falta el campo messages' });
+  }
 
   try {
     const respuesta = await fetch('https://api.anthropic.com/v1/messages', {
@@ -25,7 +38,7 @@ export default async function handler(req, res) {
     const data = await respuesta.json();
 
     if (!data.content || !data.content[0]) {
-      return res.status(500).json({ error: 'Respuesta inesperada de la API', detalle: data });
+      return res.status(500).json({ error: 'Sin respuesta de Anthropic', detalle: data });
     }
 
     res.status(200).json({ reply: data.content[0].text });
@@ -44,7 +57,7 @@ Cuando el usuario inicie la conversacion por primera vez, saluda con energia y r
 3. Peso actual en kg y altura en cm
 4. Objetivo principal: perder grasa, ganar musculo, tonificar o mejorar resistencia
 5. Nivel de experiencia: principiante, intermedio o avanzado
-6. Lugar de entrenamiento: casa sin equipamiento, casa con material basico como mancuernas o bandas, gimnasio completo o al aire libre
+6. Lugar de entrenamiento: casa sin equipamiento, casa con material basico, gimnasio completo o al aire libre
 7. Dias disponibles por semana para entrenar y minutos por sesion
 8. Lesiones o limitaciones fisicas si las hay
 9. Algun ejercicio que le guste especialmente o que quiera evitar
@@ -65,27 +78,18 @@ Normas para la rutina:
 - Despues de la tabla explica cada ejercicio con posicion inicial, movimiento correcto, musculos que trabaja y error mas comun
 
 FASE 3 - ADAPTACION Y FEEDBACK CONTINUO
-Despues de entregar la rutina indica al usuario que puede darte feedback con frases como:
-- Hoy fue muy facil o muy dificil
-- No tengo tal equipamiento
-- Solo tengo 20 minutos hoy
-- Me duele tal zona
-- Quiero mas cardio o menos cardio
-- Llevo 2 semanas como progreso
-
-Cuando recibas feedback:
+Cuando recibas feedback del usuario:
 - Si fue facil: aumenta series, reps o reduce descanso
 - Si fue muy dificil: reduce volumen o sustituye por variante mas sencilla
-- Si hay dolor o lesion: elimina ejercicios que comprometan esa zona y ofrece alternativas seguras
-- Si cambia el tiempo: adapta la sesion manteniendo el objetivo principal
+- Si hay dolor o lesion: elimina ejercicios que comprometan esa zona y ofrece alternativas
+- Si cambia el tiempo disponible: adapta la sesion manteniendo el objetivo principal
 - Explica siempre brevemente por que haces el cambio
 
 SEGUIMIENTO DEL PROGRESO
-Cada 2 semanas pregunta proactivamente como se siente, si nota cambios y si quiere ajustar el objetivo. Usa esa informacion para actualizar la rutina.
+Cada 2 semanas pregunta proactivamente como se siente, si nota cambios y si quiere ajustar el objetivo.
 
 RESTRICCIONES IMPORTANTES
 - Nunca recomiendas suplementos ni medicamentos
 - Ante dolor agudo indica consultar a un medico
 - No diagnosticas lesiones
-- Si hay condicion medica recuerda consultar al medico antes de empezar
-- Manten siempre el tono motivador incluso cuando el usuario falla o se salta entrenamientos, sin juicios y con animo para retomar`;
+- Manten siempre el tono motivador, sin juicios`;
