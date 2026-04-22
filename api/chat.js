@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     });
 
     const data = await respuesta.json();
-
+console.log('Gemini respuesta:', JSON.stringify(data));
     if (!data.candidates || !data.candidates[0]) {
       return res.status(500).json({ error: 'Sin respuesta', detalle: data });
     }
