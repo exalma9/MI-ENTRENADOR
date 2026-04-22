@@ -1,11 +1,20 @@
 // =====================================================
-// app.js — el cerebro del chat en el navegador
+// app.js — con memoria localStorage
 // =====================================================
 
-let historial = [];
+const STORAGE_KEY = 'fitcoach_historial';
+
+let historial = cargarHistorial();
 
 window.addEventListener('load', () => {
-  llamarAPI('Inicia la conversación saludando al usuario', true);
+  if (historial.length > 0) {
+    historial.forEach(msg => {
+      mostrarMensaje(msg.content, msg.role === 'user' ? 'user' : 'ai');
+    });
+    mostrarBotonReset();
+  } else {
+    llamarAPI('Hola, empieza la sesión', true);
+  }
 });
 
 document.getElementById('user-input')
@@ -17,9 +26,8 @@ document.getElementById('user-input')
   });
 
 function sendMessage() {
-  const input  = document.getElementById('user-input');
-  const texto  = input.value.trim();
-
+  const input = document.getElementById('user-input');
+  const texto = input.value.trim();
   if (!texto) return;
 
   mostrarMensaje(texto, 'user');
@@ -31,45 +39,92 @@ async function llamarAPI(textoUsuario, esInicio) {
 
   if (esInicio) {
     historial.push({ role: 'user', content: 'Hola, empieza la sesión' });
-} else {
+  } else {
     historial.push({ role: 'user', content: textoUsuario });
-}
+  }
 
   const typing = mostrarTyping();
-
   document.getElementById('send-btn').disabled = true;
 
   try {
     const res = await fetch('/api/chat', {
-      method:  'POST',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ messages: historial })
+      body: JSON.stringify({ messages: historial })
     });
 
-    const data      = await res.json();
+    const data = await res.json();
     const respuesta = data.reply;
 
     historial.push({ role: 'assistant', content: respuesta });
 
+    guardarHistorial();
+
     typing.remove();
     mostrarMensaje(respuesta, 'ai');
 
+    if (historial.length === 2) {
+      mostrarBotonReset();
+    }
+
   } catch (err) {
     typing.remove();
-    mostrarMensaje(
-      'Ups, algo salió mal. Comprueba tu conexión e inténtalo de nuevo.',
-      'ai'
-    );
+    mostrarMensaje('Ups, algo salió mal. Inténtalo de nuevo.', 'ai');
     console.error(err);
   }
 
   document.getElementById('send-btn').disabled = false;
 }
 
+function guardarHistorial() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(historial));
+  } catch (e) {
+    console.error('No se pudo guardar el historial', e);
+  }
+}
+
+function cargarHistorial() {
+  try {
+    const guardado = localStorage.getItem(STORAGE_KEY);
+    return guardado ? JSON.parse(guardado) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function resetChat() {
+  if (!confirm('¿Seguro que quieres empezar de nuevo? Se borrarán todos tus datos y rutinas guardadas.')) return;
+
+  localStorage.removeItem(STORAGE_KEY);
+  historial = [];
+  document.getElementById('chat').innerHTML = '';
+  llamarAPI('Hola, empieza la sesión', true);
+}
+
+function mostrarBotonReset() {
+  if (document.getElementById('reset-btn')) return;
+
+  const btn = document.createElement('button');
+  btn.id = 'reset-btn';
+  btn.textContent = 'Nuevo usuario';
+  btn.onclick = resetChat;
+  btn.style.cssText = `
+    margin-top: 6px;
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background: white;
+    color: #666;
+    cursor: pointer;
+  `;
+  document.querySelector('header').appendChild(btn);
+}
+
 function mostrarMensaje(texto, tipo) {
   const chat = document.getElementById('chat');
   const div  = document.createElement('div');
-
   div.className = 'msg ' + tipo;
 
   if (tipo === 'ai') {
@@ -85,12 +140,9 @@ function mostrarMensaje(texto, tipo) {
 function mostrarTyping() {
   const chat = document.getElementById('chat');
   const div  = document.createElement('div');
-
   div.className = 'msg ai typing';
   div.innerHTML = '<span></span><span></span><span></span>';
-
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
-
   return div;
 }
